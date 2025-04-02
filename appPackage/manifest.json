@@ -2,7 +2,7 @@
     "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.19/MicrosoftTeams.schema.json",
     "manifestVersion": "1.19",
     "version": "1.0.0",
-    "id": "${{TEAMS_APP_ID}}",
+    "id": "${{bb5151dc-b826-40c9-8fd3-43a011ad370c}}",
     "developer": {
         "name": "Teams App, Inc.",
         "websiteUrl": "https://www.example.com",
@@ -24,7 +24,7 @@
     "accentColor": "#FFFFFF",
     "bots": [
         {
-            "botId": "${{BOT_ID}}",
+            "botId": "${{a67bb350-aa40-4b2b-acb2-961c2595e7ba}}",
             "scopes": [
                 "personal",
                 "team",
