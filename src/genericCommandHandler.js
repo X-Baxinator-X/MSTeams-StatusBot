@@ -27,6 +27,10 @@ class GenericCommandHandler {
         response =
           "JAAAAA ES GEHT";
         break;
+        case "rick":
+        response =
+          "https://i.scdn.co/image/ab67616d0000b273e27ec71c111b88de91a51600";
+        break;
       default:
         response = `Sorry, command unknown. Please type 'help' to see the list of available commands.`;
     }

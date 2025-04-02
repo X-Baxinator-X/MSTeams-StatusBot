@@ -14,7 +14,7 @@
         "outline": "outline.png"
     },
     "name": {
-        "short": "Bot${{APP_NAME_SUFFIX}}",
+        "short": "Bot${{ExcentosBot}}",
         "full": "Full name for Bot"
     },
     "description": {
