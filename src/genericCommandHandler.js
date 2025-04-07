@@ -29,7 +29,7 @@ class GenericCommandHandler {
         break;
         case "rick":
         response =
-          "https://i.scdn.co/image/ab67616d0000b273e27ec71c111b88de91a51600";
+          "https://static.wikia.nocookie.net/dqw4w9wgxcq/images/0/08/Site-background-dark/revision/latest/scale-to-width-down/1200?cb=20220428173233";
         break;
       default:
         response = `Sorry, command unknown. Please type 'help' to see the list of available commands.`;
