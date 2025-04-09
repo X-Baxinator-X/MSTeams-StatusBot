@@ -5,13 +5,16 @@ const { HelloWorldCommandHandler } = require("./helloworldCommandHandler");
 const { adapter } = require("./internal/initialize");
 const { app } = require("./teamsBot");
 
+const port = process.env.PORT || 3978;
+
 // This template uses `express` to serve HTTP responses.
 // Create express application.
 const expressApp = express();
 expressApp.use(express.json());
 
-const server = expressApp.listen(process.env.port || process.env.PORT || 3978, () => {
-  console.log(`\nBot Started, ${expressApp.name} listening to`, server.address());
+// Initialize and start the server
+const server = expressApp.listen(port, () => {
+  console.log(`⚡ Bot läuft auf http://localhost:${port}`);
 });
 
 // Listen for user to say 'helloWorld'
