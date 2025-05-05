@@ -41,8 +41,12 @@
                     ],
                     "commands": [
                         {
-                            "title": "helloWorld",
+                            "title": "Online",
                             "description": "A helloworld command to send a welcome message"
+                        },
+                        {
+                            "title": "doSomething",
+                            "description": "A sample do something command"
                         }
                     ]
                 }

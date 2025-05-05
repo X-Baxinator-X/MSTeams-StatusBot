@@ -1,24 +1,25 @@
-const helloWorldCard = require("./adaptiveCards/helloworldCommand.json");
+const doSomethingCard = require("./adaptiveCards/doSomethingCommandResponse.json");
 const { CardFactory, MessageFactory } = require("botbuilder");
 const ACData = require("adaptivecards-templating");
 
-class HelloWorldCommandHandler {
-  triggerPatterns = "/Status";
+class DoSomethingCommandHandler {
+  triggerPatterns = "doSomething";
 
   async handleCommandReceived(context, state) {
     // verify the command arguments which are received from the client if needed.
     console.log(`App received message: ${context.activity.text}`);
 
     // do something to process your command and return message activity as the response
-    const cardJson = new ACData.Template(helloWorldCard).expand({
+    const cardJson = new ACData.Template(doSomethingCard).expand({
       $root: {
-        title: "",
-        body: "",
+        title: "doSomething command is added",
+      body: "Congratulations! You have responded to doSomething command",
       },
     });
     return MessageFactory.attachment(CardFactory.adaptiveCard(cardJson));
   }
 }
+
 module.exports = {
-  HelloWorldCommandHandler,
+  DoSomethingCommandHandler,
 };

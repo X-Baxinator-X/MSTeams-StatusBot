@@ -23,9 +23,6 @@ class GenericCommandHandler {
           "- 'helloWorld': See a sample response from me.\n" +
           "\nFeel free to ask for help anytime you need it!";
         break;
-      case "Test":
-        response =
-          "JAAAAA ES GEHT";
         break;
         case "rick":
         response =

@@ -2,6 +2,7 @@
 const express = require("express");
 const { GenericCommandHandler } = require("./genericCommandHandler");
 const { HelloWorldCommandHandler } = require("./helloworldCommandHandler");
+const { DoSomethingCommandHandler } = require("./doSomethingCommandHandler");
 const { adapter } = require("./internal/initialize");
 const { app } = require("./teamsBot");
 
@@ -14,7 +15,6 @@ const server = expressApp.listen(process.env.port || process.env.PORT || 3978, (
   console.log(`\nBot Started, ${expressApp.name} listening to`, server.address());
 });
 
-// Listen for user to say 'helloWorld'
 const helloworldCommandHandler = new HelloWorldCommandHandler();
 app.message(helloworldCommandHandler.triggerPatterns, async (context, state) => {
   const reply = await helloworldCommandHandler.handleCommandReceived(context, state);
@@ -32,6 +32,18 @@ app.message(genericCommandHandler.triggerPatterns, async (context, state) => {
     await context.sendActivity(reply);
   }
 });
+
+const doSomethingCommandHandler = new DoSomethingCommandHandler();
+app.message(
+  doSomethingCommandHandler.triggerPatterns,
+  async (context, state) => {
+    const reply = await doSomethingCommandHandler.handleCommandReceived(context, state);
+
+    if (reply) {
+      await context.sendActivity(reply);
+    }
+  }
+);
 
 // Register an API endpoint with `express`. Teams sends messages to your application
 // through this endpoint.
