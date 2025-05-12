@@ -2,7 +2,6 @@ class GenericCommandHandler {
   triggerPatterns = new RegExp(/^.+$/);
 
   async handleCommandReceived(context, state) {
-    // verify the command arguments which are received from the client if needed.
     console.log(`App received message: ${context.activity.text}`);
 
     let response = "";
@@ -18,15 +17,14 @@ class GenericCommandHandler {
       case "help":
         response =
           "Here's a list of commands I can help you with:\n" +
-          "- 'hi' or 'hello': Say hi or hello to me, and I'll greet you back.\n" +
+          "- '/𝐒𝐭𝐚𝐭𝐮𝐬': Set your status as 'Online' or 'Offline'.\n" +
           "- 'help': Get a list of available commands.\n" +
           "- 'helloWorld': See a sample response from me.\n" +
           "\nFeel free to ask for help anytime you need it!";
         break;
-        break;
-        case "rick":
+        case "cake":
         response =
-          "https://static.wikia.nocookie.net/dqw4w9wgxcq/images/0/08/Site-background-dark/revision/latest/scale-to-width-down/1200?cb=20220428173233";
+          "https://i1.sndcdn.com/artworks-000018166771-ur1ffl-t500x500.jpg";
         break;
       default:
         response = `Sorry, command unknown. Please type 'help' to see the list of available commands.`;

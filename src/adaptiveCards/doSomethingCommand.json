@@ -16,12 +16,12 @@
   "actions": [
       {
         "type": "Action.OpenUrl",
-        "title": "🟢Online",
+        "title": "Online🟢",
         "url": "https://www.example.com"
       },
       {
         "type": "Action.OpenUrl",
-        "title": "🔴Offline",
+        "title": "Offline🔴",
         "url": "https://www.example.com"
       }
   ],

@@ -6,10 +6,8 @@ class HelloWorldCommandHandler {
   triggerPatterns = "/Status";
 
   async handleCommandReceived(context, state) {
-    // verify the command arguments which are received from the client if needed.
     console.log(`App received message: ${context.activity.text}`);
 
-    // do something to process your command and return message activity as the response
     const cardJson = new ACData.Template(helloWorldCard).expand({
       $root: {
         title: "",
@@ -20,5 +18,5 @@ class HelloWorldCommandHandler {
   }
 }
 module.exports = {
-  HelloWorldCommandHandler,
-};
+  HelloWorldCommandHandler
+}
