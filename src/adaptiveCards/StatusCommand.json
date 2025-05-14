@@ -1,0 +1,39 @@
+{
+  "type": "AdaptiveCard",
+  "body": [
+    {
+      "type": "TextBlock",
+      "size": "Medium",
+      "weight": "Bolder",
+      "text": "Status"
+    },
+    {
+      "type": "TextBlock",
+      "text": "Was möchtest du setzen?",
+      "wrap": true
+    },
+    {
+      "type": "ActionSet",
+      "actions": [
+        {
+          "type": "Action.Submit",
+          "title": "🟢 Online",
+          "data": {
+            "action": "setStatus",
+            "status": "online"
+          }
+        },
+        {
+          "type": "Action.Submit",
+          "title": "🔴 Offline",
+          "data": {
+            "action": "setStatus",
+            "status": "offline"
+          }
+        }
+      ]
+    }
+  ],
+  "$schema": "https://adaptivecards.io/schemas/adaptive-card.json",
+  "version": "1.5"
+}

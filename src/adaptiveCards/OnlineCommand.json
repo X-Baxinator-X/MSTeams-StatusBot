@@ -15,14 +15,14 @@
   ],
   "actions": [
       {
-        "type": "Action.OpenUrl",
+        "type": "Action.Submit",
         "title": "Online🟢",
-        "url": "https://www.example.com"
+        "data": { "action": "setStatus", "status": "online" }
       },
       {
-        "type": "Action.OpenUrl",
+        "type": "Action.Submit",
         "title": "Offline🔴",
-        "url": "https://www.example.com"
+        "data": { "action": "setStatus", "status": "offline" }
       }
   ],
   "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
