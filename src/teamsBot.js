@@ -1,9 +1,5 @@
-const { MemoryStorage } = require("botbuilder");
-const { Application } = require("@microsoft/teams-ai");
+const { TeamsAdapter } = require("@microsoft/teams-ai");
+const config = require("./internal/config");
+const { ConfigurationServiceClientCredentialFactory } = require("botbuilder");
 
-const storage = new MemoryStorage();
-const app = new Application({
-  storage,
-});
-
-module.exports.app = app;
+const adapter = new TeamsAdapter({}, new ConfigurationServiceClientCredentialFactory(config));

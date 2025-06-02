@@ -1,37 +1,38 @@
-const { TeamsAdapter } = require("@microsoft/teams-ai");
-// Import required bot services.
-// See https://aka.ms/bot-services to learn more about the different parts of a bot.
-const { ConfigurationServiceClientCredentialFactory } = require("botbuilder");
+const path = require("path");
+require("dotenv").config({ path: path.resolve(__dirname, "../env/.env.dev") });
+
+const {
+  CloudAdapter,
+  ConfigurationServiceClientCredentialFactory,
+  ConfigurationBotFrameworkAuthentication
+} = require("botbuilder");
+
 const config = require("./config");
 
-// Create adapter.
-// See https://aka.ms/about-bot-adapter to learn more about how bots work.
-const adapter = new TeamsAdapter({}, new ConfigurationServiceClientCredentialFactory(config));
+// 🛠 fallback für MicrosoftAppType absichern
+const appType = config.MicrosoftAppType?.toLowerCase() === "singletenant" ? "SingleTenant" : "MultiTenant";
 
-// Catch-all for errors.
-const onTurnErrorHandler = async (context, error) => {
-  // This check writes out errors to console log .vs. app insights.
-  // NOTE: In production environment, you should consider logging this to Azure
-  //       application insights.
-  console.error(`\n [onTurnError] unhandled error: ${error}`);
-  console.log(error);
+// 🧱 CredentialFactory benötigt korrekte Struktur
+const credentialsFactory = new ConfigurationServiceClientCredentialFactory({
+  MicrosoftAppId: config.MicrosoftAppId,
+  MicrosoftAppPassword: config.MicrosoftAppPassword,
+  MicrosoftAppType: appType,
+  MicrosoftTenantId: config.MicrosoftAppTenantId || ""
+});
 
-  // Send a trace activity, which will be displayed in Bot Framework Emulator
-  await context.sendTraceActivity(
-    "OnTurnError Trace",
-    `${error}`,
-    "https://www.botframework.com/schemas/error",
-    "TurnError"
-  );
+// 📦 Bot Auth mit validem credentialsFactory
+const botFrameworkAuthentication = new ConfigurationBotFrameworkAuthentication(undefined, credentialsFactory);
 
-  // Send a message to the user
-  await context.sendActivity("The bot encountered an error or bug.");
-  await context.sendActivity("To continue to run this bot, please fix the bot source code.");
+// ✅ CloudAdapter
+const adapter = new CloudAdapter(botFrameworkAuthentication);
+
+// ❗ Fehlerbehandlung
+adapter.onTurnError = async (context, error) => {
+  console.error("[onTurnError]", error);
+  await context.sendActivity("❌ Bot-Fehler: " + error.message);
 };
-
-// Set the onTurnError for the singleton CloudAdapter.
-adapter.onTurnError = onTurnErrorHandler;
 
 module.exports = {
-  adapter,
+  adapter
 };
+
