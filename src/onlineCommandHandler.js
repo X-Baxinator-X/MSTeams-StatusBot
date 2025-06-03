@@ -1,38 +1,57 @@
 class OnlineCommandHandler {
   constructor(onlineStatusMap) {
     this.onlineStatusMap = onlineStatusMap;
-    this.triggerPatterns = [/^\/online/i]; // Triggert bei /online oder /online @...
+    this.triggerPatterns = [/^\/online$/i];
   }
 
   async handleCommandReceived(context, state) {
-    const mentions = context.activity.entities?.filter(e => e.type === "mention") || [];
-
-    // === 📌 Fall: Ein Benutzer wurde erwähnt ===
-    if (mentions.length > 0) {
-      const mentionedUser = mentions[0].mentioned;
-      const targetId = mentionedUser.id;
-      const targetName = mentionedUser.name;
-
-      const entry = this.onlineStatusMap.get(targetId);
-      const status = entry?.status || "offline";
-      const icon = status === "online" ? "🟢" : "🔴";
-
-      return `👤 **${targetName}** ist derzeit ${icon} **${status.toUpperCase()}**.`;
-    }
-
-    // === 📋 Fall: Alle anzeigen ===
+    // Wenn noch niemand einen Status gesetzt hat
     if (this.onlineStatusMap.size === 0) {
-      return "❌ Es sind bisher keine Nutzer erfasst.";
+      return "⚠️ Es wurde noch kein Status gesetzt.";
     }
 
-    let message = "🧾 Aktueller Status aller Nutzer:\n";
-    for (const [, value] of this.onlineStatusMap.entries()) {
-      const icon = value.status === "online" ? "🟢" : "🔴";
-      message += `• ${value.name} — ${icon} ${value.status.toUpperCase()}\n`;
+    // Einträge zu TextBlöcken umwandeln
+    const items = [];
+
+    for (const [_, user] of this.onlineStatusMap.entries()) {
+      const symbol = user.status === "online" ? "🟢" : "🔴";
+
+      items.push({
+        type: "TextBlock",
+        text: `${symbol} ${user.name}`,
+        wrap: true,
+        separator: true
+      });
     }
 
-    return message;
+    // Adaptive Card erstellen
+    const card = {
+      type: "AdaptiveCard",
+      version: "1.4",
+      $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+      body: [
+        {
+          type: "TextBlock",
+          text: "👥 Aktueller Status:",
+          weight: "Bolder",
+          size: "Medium",
+          wrap: true
+        },
+        ...items
+      ]
+    };
+
+    return {
+      attachments: [
+        {
+          contentType: "application/vnd.microsoft.card.adaptive",
+          content: card
+        }
+      ]
+    };
   }
 }
 
-module.exports = { OnlineCommandHandler };
+module.exports = {
+  OnlineCommandHandler
+};

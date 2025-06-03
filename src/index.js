@@ -1,28 +1,33 @@
 // index.js
 
 const path = require("path");
+const fs = require("fs");
 require("dotenv").config({ path: path.resolve(__dirname, "../env/.env.dev") });
 
 const express = require("express");
 const { Application } = require("@microsoft/teams-ai");
 const { MemoryStorage } = require("botbuilder");
-const { StatusCommandHandler } = require("./statusCommandHandler");
 const { OnlineCommandHandler } = require("./OnlineCommandHandler");
-const { GenericCommandHandler } = require("./genericCommandHandler");
+const { GenericCommandHandler } = require("./GenericCommandHandler");
 const { adapter } = require("./internal/initialize");
 const cron = require("node-cron");
 
-// App-Instanz erstellen
+// 🔄 Adaptive Card laden
+const statusCard = JSON.parse(
+  fs.readFileSync(path.join(__dirname, "./adaptiveCards/StatusCommand.json"), "utf8")
+);
+
+// 🧠 Online-Status-Speicher
+const onlineStatusMap = new Map();
+
+// 🧠 Bot-Instanz
 const app = new Application({
   adapter,
   botAppId: process.env.MicrosoftAppId,
   storage: new MemoryStorage()
 });
 
-// Map für Online-Status
-const onlineStatusMap = new Map();
-
-// Express-Server starten
+// 🚀 Express starten
 const expressApp = express();
 expressApp.use(express.json());
 
@@ -32,25 +37,32 @@ const server = expressApp.listen(process.env.port || process.env.PORT || 3978, (
   console.log(`\n✅ Bot gestartet auf http://${host}:${info.port}`);
 });
 
-// /status Handler
-const statusCommandHandler = new StatusCommandHandler();
-app.message(statusCommandHandler.triggerPatterns, async (context, state) => {
-  const reply = await statusCommandHandler.handleCommandReceived(context, state);
-  if (reply) {
-    await context.sendActivity(reply);
-  }
+//
+// ✅ BEFEHLE
+//
+
+// /status → Adaptive Card senden
+app.message(/^\/status$/i, async (context, state) => {
+  await context.sendActivity({
+    attachments: [
+      {
+        contentType: "application/vnd.microsoft.card.adaptive",
+        content: statusCard
+      }
+    ]
+  });
 });
 
-// /online Handler
+// /online → Zeige alle online-Nutzer
 const onlineCommandHandler = new OnlineCommandHandler(onlineStatusMap);
-app.message(onlineCommandHandler.triggerPatterns, async (context, state) => {
+app.message(/^\/online$/i, async (context, state) => {
   const reply = await onlineCommandHandler.handleCommandReceived(context, state);
   if (reply) {
     await context.sendActivity(reply);
   }
 });
 
-// Status setzen via Adaptive Card Button
+// Adaptive Card Button-Klick → Status setzen
 app.activity("message", async (context, state) => {
   const value = context.activity.value;
   const userId = context.activity.from.aadObjectId;
@@ -61,33 +73,31 @@ app.activity("message", async (context, state) => {
 
     onlineStatusMap.set(userId, {
       name: userName,
-      status,
+      status
     });
 
     await context.sendActivity(`✅ Du bist jetzt **${status.toUpperCase()}**.`);
   }
 });
 
-// Fallback Handler
+// Generischer Fallback-Handler (z. B. für "help", "cake", etc.)
 const genericCommandHandler = new GenericCommandHandler();
-app.message(genericCommandHandler.triggerPatterns, async (context, state) => {
+app.message(/.*/, async (context, state) => {
   const reply = await genericCommandHandler.handleCommandReceived(context, state);
   if (reply) {
     await context.sendActivity(reply);
   }
 });
 
-// Täglich um 4:00 Uhr alle Nutzer auf offline setzen
+// ⏰ Reset um 4 Uhr morgens
 cron.schedule("0 4 * * *", () => {
-  onlineStatusMap.forEach((user, key) => {
-    user.status = "offline";
-  });
-  console.log("⏰ Alle Nutzer wurden automatisch auf 'offline' gesetzt.");
+  onlineStatusMap.clear();
+  console.log("⏰ Online-Status wurde automatisch zurückgesetzt.");
 });
 
-// Bot-Nachrichtenempfang von Teams
+// 📬 Bot-Nachrichtenempfang von Teams
 expressApp.post("/api/messages", async (req, res) => {
   await adapter.process(req, res, async (context) => {
-    await app.run(context); // ✅ korrekt: NICHT adapter.run()
+    await app.run(context);
   });
 });

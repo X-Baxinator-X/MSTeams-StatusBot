@@ -3,7 +3,7 @@ const path = require("path");
 
 class StatusCommandHandler {
   constructor() {
-    this.triggerPatterns = [/^\/?status$/i];
+    this.triggerPatterns = [/^\/status$/i];
 
     const cardPath = path.join(__dirname,"adaptiveCards","StatusCommand.json");
     this.statusCard = JSON.parse(fs.readFileSync(cardPath, "utf-8"));
