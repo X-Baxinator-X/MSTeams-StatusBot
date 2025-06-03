@@ -7,8 +7,8 @@ require("dotenv").config({ path: path.resolve(__dirname, "../env/.env.dev") });
 const express = require("express");
 const { Application } = require("@microsoft/teams-ai");
 const { MemoryStorage } = require("botbuilder");
-const { OnlineCommandHandler } = require("./OnlineCommandHandler");
-const { GenericCommandHandler } = require("./GenericCommandHandler");
+const { OnlineCommandHandler } = require("./onlineCommandHandler");
+const { GenericCommandHandler } = require("./genericCommandHandler");
 const { adapter } = require("./internal/initialize");
 const cron = require("node-cron");
 
