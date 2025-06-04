@@ -4,27 +4,36 @@ require("dotenv").config({ path: path.resolve(__dirname, "../env/.env.dev") });
 const {
   CloudAdapter,
   ConfigurationServiceClientCredentialFactory,
-  ConfigurationBotFrameworkAuthentication
+  ConfigurationBotFrameworkAuthentication,
+  SimpleCredentialProvider
 } = require("botbuilder");
+
+const { CloudAdapterBase } = require("@microsoft/teams-ai");
 
 const config = require("./config");
 
-// 🛠 fallback für MicrosoftAppType absichern
-const appType = config.MicrosoftAppType?.toLowerCase() === "singletenant" ? "SingleTenant" : "MultiTenant";
+let adapter;
 
-// 🧱 CredentialFactory benötigt korrekte Struktur
-const credentialsFactory = new ConfigurationServiceClientCredentialFactory({
-  MicrosoftAppId: config.MicrosoftAppId,
-  MicrosoftAppPassword: config.MicrosoftAppPassword,
-  MicrosoftAppType: appType,
-  MicrosoftTenantId: config.MicrosoftAppTenantId || ""
-});
+// 🧪 Lokaler Entwicklungsmodus (kein AppId → kein Authentifizieren)
+if (!config.MicrosoftAppId) {
+  console.log("🧪 Lokaler Modus ohne Authentifizierung aktiv (z. B. Emulator)");
+  adapter = new CloudAdapterBase(new SimpleCredentialProvider());
+} else {
+  // 🔐 Produktionsmodus mit Azure Auth
+  console.log("🔐 Produktionsmodus mit MicrosoftAppId:", config.MicrosoftAppId);
 
-// 📦 Bot Auth mit validem credentialsFactory
-const botFrameworkAuthentication = new ConfigurationBotFrameworkAuthentication(undefined, credentialsFactory);
+  const appType = config.MicrosoftAppType?.toLowerCase() === "singletenant" ? "SingleTenant" : "MultiTenant";
 
-// ✅ CloudAdapter
-const adapter = new CloudAdapter(botFrameworkAuthentication);
+  const credentialsFactory = new ConfigurationServiceClientCredentialFactory({
+    MicrosoftAppId: config.MicrosoftAppId,
+    MicrosoftAppPassword: config.MicrosoftAppPassword,
+    MicrosoftAppType: appType,
+    MicrosoftTenantId: config.MicrosoftAppTenantId || ""
+  });
+
+  const botFrameworkAuthentication = new ConfigurationBotFrameworkAuthentication(undefined, credentialsFactory);
+  adapter = new CloudAdapter(botFrameworkAuthentication);
+}
 
 // ❗ Fehlerbehandlung
 adapter.onTurnError = async (context, error) => {
@@ -35,4 +44,5 @@ adapter.onTurnError = async (context, error) => {
 module.exports = {
   adapter
 };
+
 

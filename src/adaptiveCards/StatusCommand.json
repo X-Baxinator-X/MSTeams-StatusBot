@@ -3,13 +3,7 @@
   "body": [
     {
       "type": "TextBlock",
-      "size": "Medium",
-      "weight": "Bolder",
-      "text": "Status"
-    },
-    {
-      "type": "TextBlock",
-      "text": "Was möchtest du setzen?",
+      "text": "Was möchtest du tun?",
       "wrap": true
     },
     {
@@ -17,7 +11,7 @@
       "actions": [
         {
           "type": "Action.Submit",
-          "title": "🟢 Online",
+          "title": "🟢 Online stellen",
           "data": {
             "action": "setStatus",
             "status": "online"
@@ -25,10 +19,17 @@
         },
         {
           "type": "Action.Submit",
-          "title": "🔴 Offline",
+          "title": "🔴 Offline stellen",
           "data": {
             "action": "setStatus",
             "status": "offline"
+          }
+        },
+        {
+          "type": "Action.Submit",
+          "title": "🗒️ Online Liste zeigen",
+          "data": {
+            "action": "showList"
           }
         }
       ]
