@@ -31,11 +31,14 @@ const app = new Application({
 const expressApp = express();
 expressApp.use(express.json());
 
-const server = expressApp.listen(process.env.port || process.env.PORT || 3978, () => {
+const port = process.env.PORT || 3978;
+
+const server = expressApp.listen(port, () => {
   const info = server.address();
   const host = info.address === '::' ? 'localhost' : info.address;
-  console.log(`\n✅ Bot gestartet auf http://${host}:${info.port}`);
+  console.log(`\n✅ Bot gestartet auf http://${host}:${port}`);
 });
+
 
 //
 // ✅ BEFEHLE
