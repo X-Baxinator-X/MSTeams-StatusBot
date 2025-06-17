@@ -46,6 +46,11 @@ expressApp.listen(port, () => {
   console.log(`✅ Bot läuft auf http://localhost:${port}`);
 });
 
+// Keep-Alive-Endpunkt für Railway
+expressApp.get("/", (req, res) => {
+  res.status(200).send("✅ Bot ist wach");
+});
+
 async function sendMainCard(context) {
   if (!statusCard) {
     console.error("❌ [sendMainCard] statusCard ist undefined!");

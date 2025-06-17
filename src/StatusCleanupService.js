@@ -35,7 +35,7 @@ class StatusCleanupService {
         messageIds: new Map()
       });
     }
-
+    
     const entry = this.conversations.get(convId);
     entry.messageIds.set(messageId, {
       tag: meta.tag || null,
@@ -108,12 +108,6 @@ class StatusCleanupService {
         true
       );
 
-      console.log("📤 [Continue] Lösche Nachricht:", {
-        activityId: messageId,
-        conversationId: reference.conversation.id,
-        serviceUrl: reference.serviceUrl
-      });
-
   await this.adapter.continueConversationAsync(
     getSystemIdentity(),
     reference,
@@ -122,7 +116,6 @@ class StatusCleanupService {
     }
   );
 
-      console.log(`🗑️ Nachricht gelöscht (via continueConversationAsync): ${messageId}`);
     } catch (e) {
       console.warn(`❌ [Continue] Fehler beim Löschen von ${messageId}:`, e.message);
     }

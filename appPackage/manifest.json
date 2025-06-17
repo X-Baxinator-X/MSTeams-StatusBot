@@ -3,7 +3,7 @@
   "manifestVersion": "1.16",
   "version": "1.0.0",
   "id": "bb5151dc-b826-40c9-8fd3-43a011ad370c",
-  "packageName": "com.yourcompany.statusbot",
+  "packageName": "com.Excentos.statusbot",
   "name": {
     "short": "Bot | Excentos",
     "full": "Status Bot für Online-/Offline-Status"

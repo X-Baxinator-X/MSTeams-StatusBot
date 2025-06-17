@@ -18,10 +18,8 @@ let adapter;
 if (!config.MicrosoftAppId) {
   console.log("🧪 Lokaler Modus ohne Authentifizierung aktiv (z. B. Emulator)");
   adapter = new CloudAdapterBase(new SimpleCredentialProvider());
-} else {
-  // 🔐 Produktionsmodus mit Azure Auth
-  console.log("🔐 Produktionsmodus mit MicrosoftAppId:", config.MicrosoftAppId);
-
+} 
+else {
   const appType = config.MicrosoftAppType?.toLowerCase() === "singletenant" ? "SingleTenant" : "MultiTenant";
 
   const credentialsFactory = new ConfigurationServiceClientCredentialFactory({
