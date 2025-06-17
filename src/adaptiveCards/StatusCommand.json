@@ -27,7 +27,7 @@
         },
         {
           "type": "Action.Submit",
-          "title": "🗒️ Online Liste zeigen",
+          "title": "🗒️ Liste zeigen",
           "data": {
             "action": "showList"
           }

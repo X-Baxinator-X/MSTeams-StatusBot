@@ -5,23 +5,17 @@ const fs = require("fs");
 require("dotenv").config({ path: path.resolve(__dirname, "../env/.env.dev") });
 
 const express = require("express");
-const { Application, CardFactory, TurnContext } = require("@microsoft/teams-ai");
-const { MemoryStorage } = require("botbuilder");
+const { Application, TurnContext } = require("@microsoft/teams-ai");
+const { CardFactory, MemoryStorage } = require("botbuilder");
 const { adapter } = require("./internal/initialize");
 const StatusCleanupService = require("./StatusCleanupService");
 
-// 🧠 StatusCard sicher laden
 const cardPath = path.join(__dirname, "adaptiveCards", "StatusCommand.json");
-console.log("📂 Lade StatusCard von:", cardPath);
-
 let statusCard;
 
 try {
   const statusCardRaw = fs.readFileSync(cardPath, "utf8");
-  console.log("📄 Inhalt der JSON-Datei:", statusCardRaw);
-
   statusCard = JSON.parse(statusCardRaw);
-  console.log("✅ Parsed statusCard:", statusCard);
 } catch (err) {
   console.error("❌ Fehler beim Laden der StatusCard:", err.message);
   statusCard = null;
@@ -30,6 +24,7 @@ try {
 const onlineStatusMap = new Map();
 const cleanupService = new StatusCleanupService(adapter);
 cleanupService.startDailyCleanup();
+cleanupService.startExpiryCheck();
 
 const app = new Application({
   adapter,
@@ -53,16 +48,71 @@ expressApp.listen(port, () => {
 
 async function sendMainCard(context) {
   if (!statusCard) {
-    console.error("❌ [sendMainCard] statusCard ist undefined oder null!");
-    await context.sendActivity("❌ Fehler: Adaptive Card konnte nicht geladen werden.");
+    console.error("❌ [sendMainCard] statusCard ist undefined!");
+    await context.sendActivity("❌ Fehler: Card nicht geladen.");
     return;
   }
 
-  const activity = await context.sendActivity({
-    attachments: [CardFactory.adaptiveCard(statusCard)]
+  try {
+    const activity = await context.sendActivity({
+      attachments: [CardFactory.adaptiveCard(statusCard)]
+    });
+    cleanupService.trackMessage(context, activity.id, true);
+  } catch (err) {
+    console.error("❌ [sendMainCard] CardFactory Fehler:", err.message);
+    await context.sendActivity("❌ Fehler beim Senden der Karte: " + err.message);
+  }
+}
+
+async function sendOverviewCard(context) {
+  const users = [...onlineStatusMap.values()];
+
+  if (users.length === 0) {
+    await context.sendActivity("⚠️ Es wurde noch kein Status gesetzt.");
+    return;
+  }
+
+  const userBlocks = users.map(user => {
+    const symbol = user.status === "online" ? "🟢" : "🔴";
+    return {
+      type: "TextBlock",
+      text: `${symbol} ${user.name}`,
+      wrap: true,
+      separator: true
+    };
   });
 
-  cleanupService.trackMessage(context, activity.id, true);
+  const card = {
+    type: "AdaptiveCard",
+    version: "1.4",
+    $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+    body: [
+      {
+        type: "TextBlock",
+        text: "👥 Aktueller Status:",
+        weight: "Bolder",
+        size: "Medium",
+        wrap: true
+      },
+      ...userBlocks
+    ]
+  };
+
+  cleanupService.clearTrackedMessages(context, { tag: "overview" });
+
+  const reply = await context.sendActivity({
+    attachments: [
+      {
+        contentType: "application/vnd.microsoft.card.adaptive",
+        content: card
+      }
+    ]
+  });
+
+  cleanupService.trackMessage(context, reply.id, false, {
+    tag: "overview",
+    expireAfterMs: 300000
+  });
 }
 
 app.activity("message", async (context, state) => {
@@ -75,21 +125,23 @@ app.activity("message", async (context, state) => {
     await sendMainCard(context);
   }
 
-  if (value?.action === "setStatus") {
-    onlineStatusMap.set(userId, { name, status: value.status });
-    const reply = await context.sendActivity(`✅ Du bist jetzt **${value.status.toUpperCase()}**.`);
-    cleanupService.trackMessage(context, reply.id);
+if (value?.action === "setStatus") {
+  onlineStatusMap.set(userId, { name, status: value.status });
+
+  cleanupService.clearUserStatusMessages(context, userId);
+
+  const reply = await context.sendActivity(`✅ Du bist jetzt **${value.status.toUpperCase()}**.`);
+  cleanupService.trackMessage(context, reply.id, false, { tag: `status-${userId}` });
+
+  // Nur aktualisieren, wenn bereits eine Übersicht aktiv ist
+  if (cleanupService.hasMessageWithTag(context, "overview")) {
+    await sendOverviewCard(context);
   }
+}
+
 
   if (value?.action === "showList") {
-    const online = [...onlineStatusMap.values()].filter(u => u.status === "online");
-    const offline = [...onlineStatusMap.values()].filter(u => u.status === "offline");
-
-    const reply = await context.sendActivity(
-      `🟢 Online: ${online.map(u => u.name).join(", ") || "Niemand"}\n🔴 Offline: ${offline.map(u => u.name).join(", ") || "Niemand"}`
-    );
-
-    cleanupService.trackMessage(context, reply.id);
+    await sendOverviewCard(context);
   }
 });
 

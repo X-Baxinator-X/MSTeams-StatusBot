@@ -44,5 +44,3 @@ adapter.onTurnError = async (context, error) => {
 module.exports = {
   adapter
 };
-
-

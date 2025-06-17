@@ -28,22 +28,7 @@
       "botId": "61633114-228e-46e3-9e78-8f3556d3b581",
       "scopes": ["personal", "team"],
       "supportsFiles": false,
-      "isNotificationOnly": false,
-      "commandLists": [
-        {
-          "scopes": ["personal", "team"],
-          "commands": [
-            {
-              "title": "/status",
-              "description": "Setze deinen Online-/Offline-Status"
-            },
-            {
-              "title": "/online",
-              "description": "Frage den Online-Status von Teammitgliedern ab"
-            }
-          ]
-        }
-      ]
+      "isNotificationOnly": false
     }
   ],
   "permissions": [
