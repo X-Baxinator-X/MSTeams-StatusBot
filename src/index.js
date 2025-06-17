@@ -47,7 +47,7 @@ expressApp.listen(port, () => {
 });
 
 // Keep-Alive-Endpunkt für Railway
-expressApp.get("/", (req, res) => {
+expressApp.get("/ping", (req, res) => {
   res.status(200).send("✅ Bot ist wach");
 });
 
