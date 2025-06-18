@@ -124,49 +124,58 @@ class StatusCleanupService {
 
 
   startDailyCleanup(onlineStatusMap, sendOverviewCardFn) {
-    cron.schedule("10 13 * * *", async () => {
-      console.log("⏰ Täglicher Cleanup gestartet");
+  cron.schedule("20 11 * * *", async () => {
+    console.log("⏰ Täglicher Cleanup gestartet");
 
-      // ⬇ Alle Nutzer auf offline setzen
-      for (const [userId, user] of onlineStatusMap.entries()) {
-        if (user.status === "online") {
-          console.log(`🔻 Setze ${user.name} automatisch auf offline.`);
-          user.status = "offline";
+    // ⬇ Alle Nutzer auf offline setzen
+    for (const [userId, user] of onlineStatusMap.entries()) {
+      if (user.status === "online") {
+        console.log(`🔻 Setze ${user.name} automatisch auf offline.`);
+        user.status = "offline";
+      }
+    }
+
+    // ⬇ Alle Nachrichten außer Hauptkarten löschen
+    for (const [convId, entry] of this.conversations.entries()) {
+      if (!entry || !entry.messageIds || !entry.reference) {
+        console.warn(`⚠️ Überspringe beschädigte Konversation ${convId}`);
+        continue;
+      }
+
+      const { reference, mainCardId, messageIds } = entry;
+
+      for (const [msgId] of messageIds.entries()) {
+        if (msgId !== mainCardId) {
+          await this._deleteMessageByAdapter(reference, msgId);
+          messageIds.delete(msgId);
         }
       }
 
-      // ⬇ Alle Nachrichten außer Hauptkarten löschen
-      for (const [convId, { reference, mainCardId, messageIds }] of this.conversations.entries()) {
-        for (const [msgId] of messageIds.entries()) {
-          if (msgId !== mainCardId) {
-            await this._deleteMessageByAdapter(reference, msgId);
-            messageIds.delete(msgId);
-          }
-        }
+      if (messageIds.size === 0) {
+        this.conversations.delete(convId);
+      }
+    }
 
-        if (messageIds.size === 0) {
-          this.conversations.delete(convId);
+    // ⬇ Optional: Sende neue Übersichtskarte in alle Konversationen
+    if (sendOverviewCardFn) {
+      for (const entry of this.conversations.values()) {
+        if (!entry?.reference) continue;
+
+        try {
+          await this.adapter.continueConversationAsync(
+            getSystemIdentity(),
+            entry.reference,
+            async (ctx) => {
+              await sendOverviewCardFn(ctx);
+            }
+          );
+        } catch (err) {
+          console.warn("⚠️ Fehler beim Senden der Übersichtskarte:", err.message);
         }
       }
-
-      // ⬇ Optional: Sende neue Übersichtskarte in alle Konversationen
-      if (sendOverviewCardFn) {
-        for (const { reference } of this.conversations.values()) {
-          try {
-            await this.adapter.continueConversationAsync(
-              getSystemIdentity(),
-              reference,
-              async (ctx) => {
-                await sendOverviewCardFn(ctx);
-              }
-            );
-          } catch (err) {
-            console.warn("⚠️ Fehler beim Senden der Übersichtskarte:", err.message);
-          }
-        }
-      }
-    });
-  }
+    }
+  });
+}
 
 
   startExpiryCheck(intervalMs = 60000) {
