@@ -22,8 +22,8 @@ try {
 }
 
 const onlineStatusMap = new Map();
-const cleanupService = new StatusCleanupService(adapter, sendOverviewCard);
-cleanupService.startDailyCleanup();
+const cleanupService = new StatusCleanupService(adapter);
+cleanupService.startDailyCleanup(onlineStatusMap, sendOverviewCard); // <== HIER
 cleanupService.startExpiryCheck();
 
 const app = new Application({
