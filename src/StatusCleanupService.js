@@ -166,7 +166,6 @@ class StatusCleanupService {
             getSystemIdentity(),
             entry.reference,
             async (ctx) => {
-              await sendOverviewCardFn(ctx);
             }
           );
         } catch (err) {
