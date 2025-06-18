@@ -5,7 +5,7 @@
   "id": "bb5151dc-b826-40c9-8fd3-43a011ad370c",
   "packageName": "com.Excentos.statusbot",
   "name": {
-    "short": "Bot | Excentos",
+    "short": "Statusbot | Excentos",
     "full": "Status Bot für Online-/Offline-Status"
   },
   "description": {
@@ -13,7 +13,7 @@
     "full": "Mit diesem Bot kannst du deinen Online-/Offline-Status setzen und den Status anderer Teammitglieder abfragen."
   },
   "developer": {
-    "name": "Konstantin",
+    "name": "Konstantin Neuhoff",
     "websiteUrl": "https://example.com",
     "privacyUrl": "https://example.com/privacy",
     "termsOfUseUrl": "https://example.com/terms"
