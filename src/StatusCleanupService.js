@@ -124,7 +124,7 @@ class StatusCleanupService {
 
 
   startDailyCleanup(onlineStatusMap, sendOverviewCardFn) {
-  cron.schedule("35 11 * * *", async () => {
+  cron.schedule("45 11 * * *", async () => {
     console.log("⏰ Täglicher Cleanup gestartet");
 
     // ⬇ Alle Nutzer auf offline setzen
