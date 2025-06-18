@@ -124,9 +124,9 @@ class StatusCleanupService {
 
 
   startDailyCleanup(onlineStatusMap, sendOverviewCardFn) {
-    cron.schedule("0 4 * * *", async () => {
+    cron.schedule("0 2 * * *", async () => {
       console.log("⏰ Täglicher Cleanup gestartet");
-    
+
       // ⬇ Alle Nutzer auf offline setzen
       for (const [userId, user] of onlineStatusMap.entries()) {
         if (user.status === "online") {
@@ -134,7 +134,7 @@ class StatusCleanupService {
           user.status = "offline";
         }
       }
-    
+
       // ⬇ Alle Nachrichten außer Hauptkarten löschen
       for (const [convId, { reference, mainCardId, messageIds }] of this.conversations.entries()) {
         for (const [msgId] of messageIds.entries()) {
@@ -143,12 +143,12 @@ class StatusCleanupService {
             messageIds.delete(msgId);
           }
         }
-      
+
         if (messageIds.size === 0) {
           this.conversations.delete(convId);
         }
       }
-    
+
       // ⬇ Optional: Sende neue Übersichtskarte in alle Konversationen
       if (sendOverviewCardFn) {
         for (const { reference } of this.conversations.values()) {
