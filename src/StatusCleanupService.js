@@ -102,30 +102,40 @@ class StatusCleanupService {
     }
 
     try {
-      const deleteRef = TurnContext.applyConversationReference(
-        { type: "messageDelete", id: messageId },
+      await this.adapter.continueConversationAsync(
+        getSystemIdentity(),
         reference,
-        true
+        async (context) => {
+          await context.deleteActivity(messageId);
+        }
       );
-
-  await this.adapter.continueConversationAsync(
-    getSystemIdentity(),
-    reference,
-    async (context) => {
-      await context.deleteActivity(messageId);
-    }
-  );
-
     } catch (e) {
-      console.warn(`❌ [Continue] Fehler beim Löschen von ${messageId}:`, e.message);
+      if (
+        e.code === "ActivityNotFoundInConversation" ||
+        e.message?.includes("Message does not exist in the thread")
+      ) {
+        console.warn(`⚠️ Nachricht ${messageId} war bereits gelöscht (kein Problem).`);
+      } else {
+        console.warn(`❌ [Continue] Fehler beim Löschen von ${messageId}:`, e.message);
+      }
     }
   }
 
 
-  startDailyCleanup() {
+
+  startDailyCleanup(onlineStatusMap, sendOverviewCardFn) {
     cron.schedule("0 4 * * *", async () => {
       console.log("⏰ Täglicher Cleanup gestartet");
-
+    
+      // ⬇ Alle Nutzer auf offline setzen
+      for (const [userId, user] of onlineStatusMap.entries()) {
+        if (user.status === "online") {
+          console.log(`🔻 Setze ${user.name} automatisch auf offline.`);
+          user.status = "offline";
+        }
+      }
+    
+      // ⬇ Alle Nachrichten außer Hauptkarten löschen
       for (const [convId, { reference, mainCardId, messageIds }] of this.conversations.entries()) {
         for (const [msgId] of messageIds.entries()) {
           if (msgId !== mainCardId) {
@@ -133,13 +143,31 @@ class StatusCleanupService {
             messageIds.delete(msgId);
           }
         }
-
+      
         if (messageIds.size === 0) {
           this.conversations.delete(convId);
         }
       }
+    
+      // ⬇ Optional: Sende neue Übersichtskarte in alle Konversationen
+      if (sendOverviewCardFn) {
+        for (const { reference } of this.conversations.values()) {
+          try {
+            await this.adapter.continueConversationAsync(
+              getSystemIdentity(),
+              reference,
+              async (ctx) => {
+                await sendOverviewCardFn(ctx);
+              }
+            );
+          } catch (err) {
+            console.warn("⚠️ Fehler beim Senden der Übersichtskarte:", err.message);
+          }
+        }
+      }
     });
   }
+
 
   startExpiryCheck(intervalMs = 60000) {
     setInterval(async () => {

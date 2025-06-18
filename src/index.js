@@ -22,7 +22,7 @@ try {
 }
 
 const onlineStatusMap = new Map();
-const cleanupService = new StatusCleanupService(adapter);
+const cleanupService = new StatusCleanupService(adapter, sendOverviewCard);
 cleanupService.startDailyCleanup();
 cleanupService.startExpiryCheck();
 
