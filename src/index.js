@@ -131,7 +131,7 @@ app.activity("message", async (context, state) => {
   }
 
 if (value?.action === "setStatus") {
-  onlineStatusMap.set(userId, { name, status: value.status });
+  onlineStatusMap.set(userId, { name, status: value.status, timestamp: Date.now});
 
   cleanupService.clearUserStatusMessages(context, userId);
 

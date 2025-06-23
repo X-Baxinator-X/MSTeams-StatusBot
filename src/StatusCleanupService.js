@@ -123,11 +123,11 @@ class StatusCleanupService {
 
 
 
-  startDailyCleanup(onlineStatusMap, sendOverviewCardFn) {
+startDailyCleanup(onlineStatusMap, sendOverviewCardFn) {
   cron.schedule("0 2 * * *", async () => {
     console.log("⏰ Täglicher Cleanup gestartet");
 
-    // ⬇ Alle Nutzer auf offline setzen
+    // 1. Nutzer auf offline setzen
     for (const [userId, user] of onlineStatusMap.entries()) {
       if (user.status === "online") {
         console.log(`🔻 Setze ${user.name} automatisch auf offline.`);
@@ -135,7 +135,9 @@ class StatusCleanupService {
       }
     }
 
-    // ⬇ Alle Nachrichten außer Hauptkarten löschen
+    // 2. Nachrichten löschen & ggf. Übersichtskarte senden
+    const toDelete = [];
+
     for (const [convId, entry] of this.conversations.entries()) {
       if (!entry || !entry.messageIds || !entry.reference) {
         console.warn(`⚠️ Überspringe beschädigte Konversation ${convId}`);
@@ -144,6 +146,7 @@ class StatusCleanupService {
 
       const { reference, mainCardId, messageIds } = entry;
 
+      // Lösche alle Nachrichten außer MainCard
       for (const [msgId] of messageIds.entries()) {
         if (msgId !== mainCardId) {
           await this._deleteMessageByAdapter(reference, msgId);
@@ -151,30 +154,36 @@ class StatusCleanupService {
         }
       }
 
-      if (messageIds.size === 0) {
-        this.conversations.delete(convId);
-      }
-    }
-
-    // ⬇ Optional: Sende neue Übersichtskarte in alle Konversationen
-    if (sendOverviewCardFn) {
-      for (const entry of this.conversations.values()) {
-        if (!entry?.reference) continue;
-
+      // Sende neue Übersichtskarte (wenn noch Konversation besteht)
+      if (sendOverviewCardFn && mainCardId && reference?.conversation?.id) {
         try {
           await this.adapter.continueConversationAsync(
             getSystemIdentity(),
-            entry.reference,
+            reference,
             async (ctx) => {
+              await sendOverviewCardFn(ctx);
             }
           );
         } catch (err) {
           console.warn("⚠️ Fehler beim Senden der Übersichtskarte:", err.message);
         }
       }
+
+      // Merke zum Löschen, wenn leer
+      if (messageIds.size === 0) {
+        toDelete.push(convId);
+      }
     }
+
+    // 3. Leere Konversationen entfernen (damit kein Speicher-Müll bleibt)
+    for (const convId of toDelete) {
+      this.conversations.delete(convId);
+    }
+
+    console.log("✅ Cleanup abgeschlossen");
   });
 }
+
 
 
   startExpiryCheck(intervalMs = 60000) {
