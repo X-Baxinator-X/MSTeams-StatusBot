@@ -23,7 +23,7 @@ try {
 
 const onlineStatusMap = new Map();
 const cleanupService = new StatusCleanupService(adapter);
-cleanupService.startDailyCleanup(onlineStatusMap, sendOverviewCard); // <== HIER
+cleanupService.startDailyCleanup(onlineStatusMap, sendOverviewCard);
 cleanupService.startExpiryCheck();
 
 const app = new Application({
@@ -50,6 +50,14 @@ expressApp.listen(port, () => {
 expressApp.get("/ping", (req, res) => {
   res.status(200).send("✅ Bot ist wach");
 });
+
+// 🧠 Logging der Map-Größen + RAM-Verbrauch
+setInterval(() => {
+  const used = process.memoryUsage().heapUsed / 1024 / 1024;
+  console.log(`📊 RAM-Verbrauch: ${used.toFixed(2)} MB`);
+  console.log(`🧠 cleanupService.conversations: ${cleanupService.conversations.size}`);
+  console.log(`🧠 onlineStatusMap: ${onlineStatusMap.size}`);
+}, 10 * 60 * 1000); // alle 10 Minuten
 
 async function sendMainCard(context) {
   if (!statusCard) {
@@ -130,20 +138,22 @@ app.activity("message", async (context, state) => {
     await sendMainCard(context);
   }
 
-if (value?.action === "setStatus") {
-  onlineStatusMap.set(userId, { name, status: value.status, timestamp: Date.now});
+  if (value?.action === "setStatus") {
+    onlineStatusMap.set(userId, {
+      name,
+      status: value.status,
+      timestamp: Date.now() // ✅ Korrigiert
+    });
 
-  cleanupService.clearUserStatusMessages(context, userId);
+    cleanupService.clearUserStatusMessages(context, userId);
 
-  const reply = await context.sendActivity(`✅ Du bist jetzt **${value.status.toUpperCase()}**.`);
-  cleanupService.trackMessage(context, reply.id, false, { tag: `status-${userId}` });
+    const reply = await context.sendActivity(`✅ Du bist jetzt **${value.status.toUpperCase()}**.`);
+    cleanupService.trackMessage(context, reply.id, false, { tag: `status-${userId}` });
 
-  // Nur aktualisieren, wenn bereits eine Übersicht aktiv ist
-  if (cleanupService.hasMessageWithTag(context, "overview")) {
-    await sendOverviewCard(context);
+    if (cleanupService.hasMessageWithTag(context, "overview")) {
+      await sendOverviewCard(context);
+    }
   }
-}
-
 
   if (value?.action === "showList") {
     await sendOverviewCard(context);
