@@ -42,9 +42,7 @@ expressApp.post("/api/messages", async (req, res) => {
   });
 });
 
-expressApp.listen(port, () => {
-  console.log(`✅ Bot läuft auf http://localhost:${port}`);
-});
+expressApp.listen(port, () => {});
 
 // Keep-Alive-Endpunkt für Railway
 expressApp.get("/ping", (req, res) => {

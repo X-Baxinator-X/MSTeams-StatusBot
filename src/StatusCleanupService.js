@@ -12,7 +12,6 @@ const getSystemIdentity = () =>
     true
   );
 
-
 class StatusCleanupService {
   constructor(adapter) {
     this.adapter = adapter;
@@ -35,7 +34,7 @@ class StatusCleanupService {
         messageIds: new Map()
       });
     }
-    
+
     const entry = this.conversations.get(convId);
     entry.messageIds.set(messageId, {
       tag: meta.tag || null,
@@ -66,11 +65,16 @@ class StatusCleanupService {
     const entry = this.conversations.get(convId);
     if (!entry) return;
 
+    const toDelete = [];
     for (const [msgId, meta] of entry.messageIds.entries()) {
       if (!filter.tag || meta.tag === filter.tag) {
-        entry.messageIds.delete(msgId);
-        this._deleteMessageByAdapter(entry.reference, msgId);
+        toDelete.push(msgId);
       }
+    }
+
+    for (const msgId of toDelete) {
+      entry.messageIds.delete(msgId);
+      this._deleteMessageByAdapter(entry.reference, msgId);
     }
 
     if (entry.messageIds.size === 0) {
@@ -78,22 +82,24 @@ class StatusCleanupService {
     }
   }
 
-  /**
-   * Löscht alle alten Status-Nachrichten eines bestimmten Users (z. B. bei Statuswechsel).
-   */
   clearUserStatusMessages(context, userId) {
     const convId = context.activity.conversation.id;
     const entry = this.conversations.get(convId);
     if (!entry) return;
 
+    const toDelete = [];
+
     for (const [msgId, meta] of entry.messageIds.entries()) {
       if (meta.tag === `status-${userId}`) {
-        entry.messageIds.delete(msgId);
-        this._deleteMessageByAdapter(entry.reference, msgId);
+        toDelete.push(msgId);
       }
     }
-  }
 
+    for (const msgId of toDelete) {
+      entry.messageIds.delete(msgId);
+      this._deleteMessageByAdapter(entry.reference, msgId);
+    }
+  }
 
   async _deleteMessageByAdapter(reference, messageId) {
     if (!reference?.serviceUrl || !reference?.conversation?.id) {
@@ -114,93 +120,105 @@ class StatusCleanupService {
         e.code === "ActivityNotFoundInConversation" ||
         e.message?.includes("Message does not exist in the thread")
       ) {
-        console.warn(`⚠️ Nachricht ${messageId} war bereits gelöscht (kein Problem).`);
+        console.warn(`⚠️ Nachricht ${messageId} war bereits gelöscht.`);
       } else {
-        console.warn(`❌ [Continue] Fehler beim Löschen von ${messageId}:`, e.message);
+        console.warn(`❌ Fehler beim Löschen von ${messageId}:`, e.message);
       }
     }
   }
 
+  startDailyCleanup(onlineStatusMap, sendOverviewCardFn) {
+    cron.schedule("0 2 * * *", async () => {
+      console.log("⏰ Täglicher Cleanup gestartet");
 
-
-startDailyCleanup(onlineStatusMap, sendOverviewCardFn) {
-  cron.schedule("0 2 * * *", async () => {
-    console.log("⏰ Täglicher Cleanup gestartet");
-
-    // 1. Nutzer auf offline setzen
-    for (const [userId, user] of onlineStatusMap.entries()) {
-      if (user.status === "online") {
-        console.log(`🔻 Setze ${user.name} automatisch auf offline.`);
-        user.status = "offline";
-      }
-    }
-
-    // 2. Nachrichten löschen & ggf. Übersichtskarte senden
-    const toDelete = [];
-
-    for (const [convId, entry] of this.conversations.entries()) {
-      if (!entry || !entry.messageIds || !entry.reference) {
-        console.warn(`⚠️ Überspringe beschädigte Konversation ${convId}`);
-        continue;
+      // Alle Nutzer auf offline setzen
+      for (const [userId, user] of onlineStatusMap.entries()) {
+        if (user.status === "online") {
+          console.log(`🔻 Setze ${user.name} automatisch auf offline.`);
+          user.status = "offline";
+        }
       }
 
-      const { reference, mainCardId, messageIds } = entry;
+      // Nachrichten löschen, aber nicht während Iteration
+      const convsToDelete = [];
 
-      // Lösche alle Nachrichten außer MainCard
-      for (const [msgId] of messageIds.entries()) {
-        if (msgId !== mainCardId) {
+      for (const [convId, entry] of this.conversations.entries()) {
+        if (!entry?.messageIds || !entry.reference) {
+          console.warn(`⚠️ Überspringe beschädigte Konversation ${convId}`);
+          continue;
+        }
+
+        const { reference, mainCardId, messageIds } = entry;
+        const toDelete = [];
+
+        for (const [msgId] of messageIds.entries()) {
+          if (msgId !== mainCardId) {
+            toDelete.push(msgId);
+          }
+        }
+
+        for (const msgId of toDelete) {
           await this._deleteMessageByAdapter(reference, msgId);
           messageIds.delete(msgId);
         }
-      }
 
-      // Sende neue Übersichtskarte (wenn noch Konversation besteht)
-      if (sendOverviewCardFn && mainCardId && reference?.conversation?.id) {
-        try {
-          await this.adapter.continueConversationAsync(
-            getSystemIdentity(),
-            reference,
-            async (ctx) => {
-              await sendOverviewCardFn(ctx);
-            }
-          );
-        } catch (err) {
-          console.warn("⚠️ Fehler beim Senden der Übersichtskarte:", err.message);
+        if (messageIds.size === 0) {
+          convsToDelete.push(convId);
         }
       }
 
-      // Merke zum Löschen, wenn leer
-      if (messageIds.size === 0) {
-        toDelete.push(convId);
+      for (const convId of convsToDelete) {
+        this.conversations.delete(convId);
       }
-    }
 
-    // 3. Leere Konversationen entfernen (damit kein Speicher-Müll bleibt)
-    for (const convId of toDelete) {
-      this.conversations.delete(convId);
-    }
+      // Übersichtskarte senden (nur wenn Nutzer da)
+      if (sendOverviewCardFn && onlineStatusMap.size > 0) {
+        for (const entry of this.conversations.values()) {
+          if (!entry?.reference) continue;
 
-    console.log("✅ Cleanup abgeschlossen");
-  });
-}
-
-
+          try {
+            await this.adapter.continueConversationAsync(
+              getSystemIdentity(),
+              entry.reference,
+              async (ctx) => {
+                await sendOverviewCardFn(ctx);
+              }
+            );
+          } catch (err) {
+            console.warn("⚠️ Fehler beim Senden der Übersichtskarte:", err.message);
+          }
+        }
+      }
+    });
+  }
 
   startExpiryCheck(intervalMs = 60000) {
     setInterval(async () => {
       const now = Date.now();
 
+      const convsToDelete = [];
+
       for (const [convId, { reference, messageIds }] of this.conversations.entries()) {
+        const toDelete = [];
+
         for (const [msgId, meta] of messageIds.entries()) {
           if (meta.expireAfterMs && now - meta.timestamp >= meta.expireAfterMs) {
-            await this._deleteMessageByAdapter(reference, msgId);
-            messageIds.delete(msgId);
+            toDelete.push(msgId);
           }
         }
 
-        if (messageIds.size === 0) {
-          this.conversations.delete(convId);
+        for (const msgId of toDelete) {
+          await this._deleteMessageByAdapter(reference, msgId);
+          messageIds.delete(msgId);
         }
+
+        if (messageIds.size === 0) {
+          convsToDelete.push(convId);
+        }
+      }
+
+      for (const convId of convsToDelete) {
+        this.conversations.delete(convId);
       }
     }, intervalMs);
   }
