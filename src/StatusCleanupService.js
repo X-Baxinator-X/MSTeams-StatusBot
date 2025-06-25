@@ -19,7 +19,7 @@ class StatusCleanupService {
     this.CONVERSATION_EXPIRY_MS = 1000 * 60 * 60 * 24 * 2; // 2 Tage
   }
 
-  trackMessage(context, messageId, isMainCard = false, meta = {}) {
+  trackConversation(context) {
     const convId = context.activity.conversation.id;
     const reference = TurnContext.getConversationReference(context.activity);
 
@@ -28,7 +28,9 @@ class StatusCleanupService {
       return;
     }
 
-    if (!this.conversations.has(convId)) {
+    if (this.conversations.has(convId)) {
+      this.conversations.get(convId).lastActivity = Date.now();
+    } else {
       this.conversations.set(convId, {
         reference,
         mainCardId: null,
@@ -36,9 +38,12 @@ class StatusCleanupService {
         lastActivity: Date.now()
       });
     }
+  }
 
+  trackMessage(context, messageId, isMainCard = false, meta = {}) {
+    const convId = context.activity.conversation.id;
+    this.trackConversation(context); // Duplikate vermeiden und aktualisieren
     const entry = this.conversations.get(convId);
-    entry.lastActivity = Date.now();
 
     entry.messageIds.set(messageId, {
       tag: meta.tag || null,
