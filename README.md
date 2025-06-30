@@ -18,7 +18,7 @@ Ein Microsoft Teams Bot ist ein Programm, das auf **Nachrichten** und **Aktionen
 
 ### Ablauf – in einfachen Schritten:
 
-1. **Ein Nutzer klickt auf einen Button in einer Adaptive Card vom bot.
+1. **Ein Nutzer klickt auf einen Button in einer Adaptive Card vom bot**.
 2. **Teams sendet diese Nachricht an das Azure Bot Framework**.
 3. **Azure Bot Framework ruft deinen Bot auf Railway über HTTPS auf** (`/api/messages`).
 4. **Dein Node.js-Bot verarbeitet die Nachricht** und antwortet ggf. wieder über das Framework.
