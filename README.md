@@ -18,7 +18,7 @@ Ein Microsoft Teams Bot ist ein Programm, das auf **Nachrichten** und **Aktionen
 
 ### Ablauf – in einfachen Schritten:
 
-1. **Ein Nutzer schreibt dem Bot** (z. B. `/online`) oder klickt auf einen Button in einer Adaptive Card.
+1. **Ein Nutzer klickt auf einen Button in einer Adaptive Card vom bot.
 2. **Teams sendet diese Nachricht an das Azure Bot Framework**.
 3. **Azure Bot Framework ruft deinen Bot auf Railway über HTTPS auf** (`/api/messages`).
 4. **Dein Node.js-Bot verarbeitet die Nachricht** und antwortet ggf. wieder über das Framework.
@@ -67,7 +67,7 @@ https://your-bot.up.railway.app/api/messages
 ### Warum funktioniert das nur mit Azure?
 
 Azure validiert jedes Token, prüft Identität und schützt deinen Bot-Endpunkt vor Missbrauch.
-Ohne gültiges Token (wie im Bot Emulator) bekommt man HTTP 401 (Unauthorized).
+Ohne gültiges Token bekommt man HTTP 401 (Unauthorized).
 
 ---
 
@@ -79,10 +79,7 @@ Ohne gültiges Token (wie im Bot Emulator) bekommt man HTTP 401 (Unauthorized).
 src/
 ├── index.js                 # Hauptlogik
 ├── StatusCleanupService.js  # Verwaltung & automatische Löschung
-├── cards/mainCard.js        # Adaptive Card mit Buttons
-├── commandHandlers/         # Slash-Commands wie /online
-├── utils/                   # Logging & Tools
-.env.production              # Railway-Konfiguration
+├── adaptiveCards/StatusCommand.js        # Adaptive Card mit Buttons
 ```
 
 ---
@@ -93,7 +90,6 @@ Was passiert hier?
 
 * Initialisiert Bot Framework Adapter (für Kommunikation mit Teams)
 * Lädt Umgebungsvariablen (.env.production)
-* Registriert Commands wie `/online`
 * Reagiert auf Button-Klicks aus Adaptive Cards
 * Speichert `onlineStatusMap` (Map von Nutzer-ID zu Status)
 * Sorgt dafür, dass jede Konversation getrackt wird
@@ -190,3 +186,6 @@ So ist dein Bot **geschützt vor externen Zugriffen**.
 * Keine Datenbank notwendig – alles im RAM
 * Railway übernimmt Hosting, Sleep, Wake, Logging – kein eigener Server nötig
 * Architektur ist robust, ressourcenschonend und skalierbar
+
+
+
