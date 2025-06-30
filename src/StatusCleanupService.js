@@ -110,6 +110,11 @@ class StatusCleanupService {
         getSystemIdentity(),
         reference,
         async (context) => {
+          if (context.activity.channelId !== 'msteams') {
+            console.warn(`⚠️ Löschen nicht unterstützt in Kanal: ${context.activity.channelId}`);
+            return;
+          }
+
           await context.deleteActivity(messageId);
         }
       );
