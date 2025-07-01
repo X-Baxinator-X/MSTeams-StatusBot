@@ -79,7 +79,7 @@ Ohne gültiges Token bekommt man HTTP 401 (Unauthorized).
 src/
 ├── index.js                 # Hauptlogik
 ├── StatusCleanupService.js  # Verwaltung & automatische Löschung
-├── adaptiveCards/StatusCommand.js        # Adaptive Card mit Buttons
+├── adaptiveCards/StatusCommand.json        # Adaptive Card mit Buttons
 ```
 
 ---
@@ -116,7 +116,7 @@ Speicherverbrauch soll dauerhaft unter 100 MB bleiben, auch bei vielen Nutzern. 
 
 ---
 
-### 🧠 `mainCard.js` – Adaptive Card mit Buttons
+### 🧠 `StatusCommand.json` – Adaptive Card mit Buttons
 
 Diese Datei liefert den JSON-Code für eine Karte mit:
 
