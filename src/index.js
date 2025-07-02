@@ -2,7 +2,7 @@
 
 const path = require("path");
 const fs = require("fs");
-require("dotenv").config({ path: path.resolve(__dirname, "../env/.env.dev") });
+require("dotenv").config();
 
 const express = require("express");
 const { Application, TurnContext } = require("@microsoft/teams-ai");
