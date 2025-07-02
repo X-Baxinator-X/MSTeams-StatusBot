@@ -24,3 +24,8 @@ lib/
 
 # Dev tool directories
 /devTools/
+
+# Verhindert, dass Umgebungsdateien gepusht werden
+.env
+.env.*
+env/
